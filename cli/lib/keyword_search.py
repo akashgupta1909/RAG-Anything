@@ -1,13 +1,15 @@
-from lib.search_util import movies_data, Movie
+from .search_util import Movie, match_keywords_in_title, movies_data, tokenizer
 
 
-def keyword_search(keyword: str) -> list[Movie]:
+def keyword_search(keyword: str, limit: int = 5) -> list[Movie]:
+    keyword_tokens = tokenizer(keyword)
     data = movies_data()
     matched_movies: list[Movie] = []
     for movie in data["movies"]:
-        if keyword in movie["title"].lower():
+        title_tokens = tokenizer(movie["title"])
+        if match_keywords_in_title(title_tokens, keyword_tokens):
             matched_movies.append(movie)
-        if len(matched_movies) >= 5:
+        if len(matched_movies) >= limit:
             break
     return matched_movies
 
