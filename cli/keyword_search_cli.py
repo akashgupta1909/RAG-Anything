@@ -1,5 +1,5 @@
 import argparse
-from lib.keyword_search import keyword_search, print_movie_title
+from lib.keyword_search import keyword_search, print_movie_title, build_command
 
 
 def main() -> None:
@@ -9,6 +9,8 @@ def main() -> None:
     search_parser = subparsers.add_parser("search", help="Search movies using keywords")
     search_parser.add_argument("query", type=str, help="Search query")
 
+    subparsers.add_parser("build", help="Build the inverted index")
+
     args = parser.parse_args()
 
     match args.command:
@@ -17,6 +19,10 @@ def main() -> None:
             movies = keyword_search(args.query)
             print_movie_title(movies)
             pass
+        case "build":
+            print("Building the inverted index...")
+            build_command(show_percentage=True)
+
         case _:
             parser.print_help()
 
