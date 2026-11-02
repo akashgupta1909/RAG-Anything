@@ -9,4 +9,11 @@ wheels/
 # Virtual environments
 .venv
 
+# OS files
+.DS_Store
+
+# Generated search index
+cache/
+
+# Large dataset (download separately)
 data/movies.json
