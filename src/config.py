@@ -10,3 +10,6 @@ STOPWORDS_FILE = DATA_DIR / "stopwords.txt"
 
 CACHE_DIR = PROJECT_ROOT / "cache"
 INDEX_CACHE_FILE = CACHE_DIR / "inverted_index.pkl"
+
+BM25_K1 = 1.5
+BM25_B = 0.75

@@ -1,6 +1,6 @@
 # rag-search-engine
 
-Keyword search over a movie dataset using an inverted index — the retrieval layer for a RAG pipeline.
+Keyword search over a movie dataset using an inverted index with BM25 ranking — the retrieval layer for a RAG pipeline.
 
 ## Setup
 
@@ -16,8 +16,10 @@ Place the dataset at `data/movies.json` (not tracked in git).
 
 ```bash
 uv run keyword-search build             # build and cache the inverted index
-uv run keyword-search search "space"    # search movies by keyword
-uv run keyword-search tf 42 space       # term frequency of a term in a document
+uv run keyword-search search "space"    # search movies, ranked by BM25
+uv run keyword-search tf 42 space       # raw term frequency of a term in a document
+uv run keyword-search bm25idf space     # BM25 IDF of a term
+uv run keyword-search bm25tf 42 space   # BM25 TF of a term in a document (optional k1, b)
 ```
 
 ## Development
