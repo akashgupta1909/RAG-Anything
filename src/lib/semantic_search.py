@@ -8,6 +8,7 @@ from typing import cast
 import numpy as np
 from numpy.typing import NDArray
 from sentence_transformers import SentenceTransformer
+from transformers.utils import logging as hf_logging
 
 from config import CACHE_DIR, EMBEDDING_MODEL, MOVIE_EMBEDDINGS_FILE
 from lib.search_util import Movie, load_movies
@@ -44,9 +45,20 @@ class SemanticSearch:
     def model(self) -> SentenceTransformer:
         """The embedding model, loaded on first use (loading is slow)."""
         try:
-            return SentenceTransformer(self.model_name)
+            return self._load_model()
         except Exception as e:  # third-party loader can fail in many ways (network, disk, ...)
             raise RuntimeError(f"Failed to load embedding model '{self.model_name}': {e}") from e
+
+    def _load_model(self) -> SentenceTransformer:
+        # Hide transformers' "Loading weights" bar; encode()'s own progress bar is unaffected.
+        hf_logging.disable_progress_bar()
+        try:
+            # Use the locally cached copy if there is one: skips the Hugging Face Hub
+            # update checks, which cost 1-2 s of network round-trips on every run.
+            return SentenceTransformer(self.model_name, local_files_only=True)
+        except OSError:
+            # Not cached yet (first run): download it from the Hub.
+            return SentenceTransformer(self.model_name)
 
     def _encode(self, texts: str | list[str], *, show_progress: bool = False) -> Embedding:
         embeddings = self.model.encode(  # pyright: ignore[reportUnknownMemberType]
