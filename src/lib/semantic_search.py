@@ -46,8 +46,12 @@ class SemanticSearch:
         """The embedding model, loaded on first use (loading is slow)."""
         try:
             return self._load_model()
-        except Exception as e:  # third-party loader can fail in many ways (network, disk, ...)
-            raise RuntimeError(f"Failed to load embedding model '{self.model_name}': {e}") from e
+        except (
+            Exception
+        ) as e:  # third-party loader can fail in many ways (network, disk, ...)
+            raise RuntimeError(
+                f"Failed to load embedding model '{self.model_name}': {e}"
+            ) from e
 
     def _load_model(self) -> SentenceTransformer:
         # Hide transformers' "Loading weights" bar; encode()'s own progress bar is unaffected.
@@ -60,7 +64,9 @@ class SemanticSearch:
             # Not cached yet (first run): download it from the Hub.
             return SentenceTransformer(self.model_name)
 
-    def _encode(self, texts: str | list[str], *, show_progress: bool = False) -> Embedding:
+    def _encode(
+        self, texts: str | list[str], *, show_progress: bool = False
+    ) -> Embedding:
         embeddings = self.model.encode(  # pyright: ignore[reportUnknownMemberType]
             texts,
             normalize_embeddings=True,
@@ -95,17 +101,25 @@ class SemanticSearch:
     def search(self, query: str, limit: int = 5) -> list[SearchResult]:
         """Return the ``limit`` documents most similar to ``query``, best first."""
         if self.embeddings is None:
-            raise RuntimeError("No embeddings loaded. Call `load_or_create_embeddings` first.")
+            raise RuntimeError(
+                "No embeddings loaded. Call `load_or_create_embeddings` first."
+            )
         query_embedding = self.generate_embedding(query)
-        scores = self.embeddings @ query_embedding  # cosine similarity: rows are unit length
-        top_indices = cast(list[int], np.argsort(-scores, kind="stable")[:limit].tolist())
+        scores = (
+            self.embeddings @ query_embedding
+        )  # cosine similarity: rows are unit length
+        top_indices = cast(
+            list[int], np.argsort(-scores, kind="stable")[:limit].tolist()
+        )
         return [SearchResult(float(scores[i]), self.documents[i]) for i in top_indices]
 
     def _save_cache(self) -> None:
         if self.embeddings is None:
             raise RuntimeError("No embeddings to save")
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        tmp_file = MOVIE_EMBEDDINGS_FILE.with_name(f"{MOVIE_EMBEDDINGS_FILE.stem}.tmp.npz")
+        tmp_file = MOVIE_EMBEDDINGS_FILE.with_name(
+            f"{MOVIE_EMBEDDINGS_FILE.stem}.tmp.npz"
+        )
         np.savez(
             tmp_file,
             embeddings=self.embeddings,
@@ -123,7 +137,9 @@ class SemanticSearch:
                 model_name = str(cache["model_name"])
         except (OSError, KeyError, ValueError, zipfile.BadZipFile):
             return None  # missing, unreadable or old-format cache
-        if model_name != self.model_name or doc_ids != [movie["id"] for movie in documents]:
+        if model_name != self.model_name or doc_ids != [
+            movie["id"] for movie in documents
+        ]:
             return None
         return embeddings
 

@@ -29,7 +29,11 @@ def _stem(token: str) -> str:
 def tokenize(text: str) -> list[str]:
     """Normalise ``text``, drop stop words and return the stemmed tokens."""
     stop_words = load_stop_words()
-    return [_stem(token) for token in preprocess_text(text).split() if token not in stop_words]
+    return [
+        _stem(token)
+        for token in preprocess_text(text).split()
+        if token not in stop_words
+    ]
 
 
 def tokenize_single_term(term: str) -> str:
@@ -64,7 +68,9 @@ class InvertedIndex:
 
     def _refresh_stats(self) -> None:
         num_docs = len(self.doc_lengths)
-        self._avg_doc_length = sum(self.doc_lengths.values()) / num_docs if num_docs else 0.0
+        self._avg_doc_length = (
+            sum(self.doc_lengths.values()) / num_docs if num_docs else 0.0
+        )
 
     def _require_document(self, doc_id: int) -> None:
         if doc_id not in self.docmap:
@@ -82,9 +88,13 @@ class InvertedIndex:
         """Return the BM25 inverse document frequency (IDF) of ``token``."""
         doc_freq = len(self.index.get(token, ()))
         total_docs = len(self.docmap)
-        return math.log((total_docs - doc_freq + smoothing) / (doc_freq + smoothing) + 1)
+        return math.log(
+            (total_docs - doc_freq + smoothing) / (doc_freq + smoothing) + 1
+        )
 
-    def get_bm25_tf(self, doc_id: int, token: str, k1: float = BM25_K1, b: float = BM25_B) -> float:
+    def get_bm25_tf(
+        self, doc_id: int, token: str, k1: float = BM25_K1, b: float = BM25_B
+    ) -> float:
         """Return the saturated, length-normalised BM25 term frequency of ``token``."""
         self._require_document(doc_id)
         tf = self.get_term_frequency(doc_id, token)
@@ -118,14 +128,18 @@ class InvertedIndex:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
         tmp_file = INDEX_CACHE_FILE.with_suffix(".tmp")
         with tmp_file.open("wb") as file:
-            pickle.dump((self.index, self.docmap, self.term_frequencies, self.doc_lengths), file)
+            pickle.dump(
+                (self.index, self.docmap, self.term_frequencies, self.doc_lengths), file
+            )
         tmp_file.replace(INDEX_CACHE_FILE)
 
     def load(self) -> None:
         """Load a previously saved index from the cache file."""
         try:
             with INDEX_CACHE_FILE.open("rb") as file:
-                self.index, self.docmap, self.term_frequencies, self.doc_lengths = pickle.load(file)
+                self.index, self.docmap, self.term_frequencies, self.doc_lengths = (
+                    pickle.load(file)
+                )
         except FileNotFoundError as e:
             raise FileNotFoundError(
                 f"Index cache not found at {INDEX_CACHE_FILE}. Run the 'build' command first."
@@ -161,6 +175,8 @@ def get_bm25_idf(term: str) -> float:
     return _load_index().get_bm25_idf(tokenize_single_term(term))
 
 
-def get_bm25_tf(doc_id: int, term: str, k1: float = BM25_K1, b: float = BM25_B) -> float:
+def get_bm25_tf(
+    doc_id: int, term: str, k1: float = BM25_K1, b: float = BM25_B
+) -> float:
     """Return the BM25 term frequency of ``term`` in document ``doc_id``."""
     return _load_index().get_bm25_tf(doc_id, tokenize_single_term(term), k1=k1, b=b)
