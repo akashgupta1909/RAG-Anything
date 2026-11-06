@@ -1,4 +1,4 @@
-"""Dataset loading and text normalisation helpers."""
+"""The movie dataset, stop words, and the text normalisation shared by both."""
 
 import json
 import string

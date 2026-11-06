@@ -21,7 +21,7 @@ from config import (
     MOVIE_EMBEDDINGS_FILE,
 )
 from lib.chunking import semantic_chunk
-from lib.search_util import Movie, load_movies
+from lib.dataset import Movie, load_movies
 
 Embedding = NDArray[np.float32]
 """One embedding vector (1-D), or a matrix of them with one row per text (2-D)."""

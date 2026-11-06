@@ -4,6 +4,7 @@ import argparse
 import sys
 
 from config import BM25_B, BM25_K1
+from lib.dataset import Movie
 from lib.keyword_search import (
     build_index,
     get_bm25_idf,
@@ -11,7 +12,6 @@ from lib.keyword_search import (
     get_term_frequency,
     keyword_search,
 )
-from lib.search_util import Movie
 
 
 def _print_movies(movies: list[Movie]) -> None:

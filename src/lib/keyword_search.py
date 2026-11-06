@@ -9,7 +9,7 @@ from typing import cast
 from nltk.stem import PorterStemmer  # type: ignore[import-untyped]
 
 from config import BM25_B, BM25_K1, CACHE_DIR, INDEX_CACHE_FILE
-from lib.search_util import (
+from lib.dataset import (
     Movie,
     load_movies,
     load_stop_words,
