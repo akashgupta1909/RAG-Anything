@@ -1,5 +1,36 @@
 """Split long text into smaller, overlapping chunks for embedding."""
 
+import re
+
+SENTENCE_BOUNDARY = r"(?<=[.!?])\s+"
+
+
+def semantic_chunk(text: str, max_chunk_size: int = 4, overlap: int = 0) -> list[str]:
+    """Split ``text`` into chunks of up to ``max_chunk_size`` sentences.
+
+    Each chunk after the first starts with the last ``overlap`` sentences of the
+    previous chunk.
+    """
+    if max_chunk_size <= 0:
+        raise ValueError(f"max_chunk_size must be positive, got {max_chunk_size}")
+    if overlap < 0:
+        raise ValueError(f"overlap must not be negative, got {overlap}")
+    if overlap >= max_chunk_size:
+        raise ValueError(
+            f"overlap ({overlap}) must be smaller than max_chunk_size ({max_chunk_size})"
+        )
+
+    sentences = re.split(SENTENCE_BOUNDARY, text.strip())
+    sentences = [s for s in sentences if s]
+
+    chunks: list[str] = []
+    step = max_chunk_size - overlap
+    for start in range(0, len(sentences), step):
+        chunks.append(" ".join(sentences[start : start + max_chunk_size]))
+        if start + max_chunk_size >= len(sentences):
+            break  # the rest would only repeat sentences already covered
+    return chunks
+
 
 def chunk_text(text: str, chunk_size: int, overlap: int = 0) -> list[str]:
     """Split ``text`` into chunks of ``chunk_size`` words.
