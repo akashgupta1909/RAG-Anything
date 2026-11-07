@@ -4,8 +4,8 @@ import argparse
 import sys
 
 from lib.chunking import chunk_text, semantic_chunk
+from lib.dataset import SearchResult
 from lib.semantic_search import (
-    SearchResult,
     embed_chunks,
     embed_text,
     search_chunked,

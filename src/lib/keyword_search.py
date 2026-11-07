@@ -11,6 +11,7 @@ from nltk.stem import PorterStemmer  # type: ignore[import-untyped]
 from config import BM25_B, BM25_K1, CACHE_DIR, INDEX_CACHE_FILE
 from lib.dataset import (
     Movie,
+    SearchResult,
     load_movies,
     load_stop_words,
     preprocess_text,
@@ -101,10 +102,8 @@ class InvertedIndex:
         length_norm = 1 - b + b * (self.doc_lengths[doc_id] / self._avg_doc_length)
         return (tf * (k1 + 1)) / (tf + k1 * length_norm)
 
-    def bm25_search_with_scores(
-        self, query: str, limit: int = 5
-    ) -> list[tuple[Movie, float]]:
-        """Return up to ``limit`` ``(movie, BM25 score)`` pairs, best first."""
+    def bm25_search_with_scores(self, query: str, limit: int = 5) -> list[SearchResult]:
+        """Return up to ``limit`` movies with their BM25 scores, best first."""
         scores: defaultdict[int, float] = defaultdict(float)
         for token in set(tokenize(query)):
             idf = self.get_bm25_idf(token)
@@ -112,11 +111,14 @@ class InvertedIndex:
                 scores[doc_id] += idf * self.get_bm25_tf(doc_id, token)
         # Ties are broken by document id so results are deterministic.
         ranked = sorted(scores, key=lambda doc_id: (-scores[doc_id], doc_id))
-        return [(self.docmap[doc_id], scores[doc_id]) for doc_id in ranked[:limit]]
+        return [
+            SearchResult(scores[doc_id], self.docmap[doc_id])
+            for doc_id in ranked[:limit]
+        ]
 
     def bm25_search(self, query: str, limit: int = 5) -> list[Movie]:
         """Return up to ``limit`` movies ranked by BM25 score for ``query``."""
-        return [movie for movie, _ in self.bm25_search_with_scores(query, limit)]
+        return [result.movie for result in self.bm25_search_with_scores(query, limit)]
 
     def build(self, on_progress: ProgressCallback | None = None) -> None:
         """Index every movie in the dataset."""
@@ -156,6 +158,17 @@ class InvertedIndex:
 def _load_index() -> InvertedIndex:
     index = InvertedIndex()
     index.load()
+    return index
+
+
+def load_or_build_index() -> InvertedIndex:
+    """Load the cached index, building and saving it first if there is none."""
+    index = InvertedIndex()
+    if INDEX_CACHE_FILE.exists():
+        index.load()
+    else:
+        index.build()
+        index.save()
     return index
 
 

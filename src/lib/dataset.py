@@ -1,7 +1,8 @@
-"""The movie dataset, stop words, and the text normalisation shared by both."""
+"""The movie dataset and its search result type, plus stop words and text normalisation."""
 
 import json
 import string
+from dataclasses import dataclass
 from functools import cache
 from typing import TypedDict, cast
 
@@ -18,6 +19,14 @@ class Movie(TypedDict):
 
 class MoviesData(TypedDict):
     movies: list[Movie]
+
+
+@dataclass(frozen=True, slots=True)
+class SearchResult:
+    """A movie returned by a search, with the score it was ranked by."""
+
+    score: float
+    movie: Movie
 
 
 def preprocess_text(text: str) -> str:

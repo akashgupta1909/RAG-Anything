@@ -2,7 +2,6 @@
 
 import hashlib
 import zipfile
-from dataclasses import dataclass
 from functools import cached_property
 from pathlib import Path
 from typing import cast
@@ -21,18 +20,12 @@ from config import (
     MOVIE_EMBEDDINGS_FILE,
 )
 from lib.chunking import semantic_chunk
-from lib.dataset import Movie, load_movies
+from lib.dataset import Movie, SearchResult, load_movies
 
 Embedding = NDArray[np.float32]
 """One embedding vector (1-D), or a matrix of them with one row per text (2-D)."""
 
 CacheArrays = dict[str, NDArray[np.generic]]
-
-
-@dataclass(frozen=True, slots=True)
-class SearchResult:
-    score: float
-    movie: Movie
 
 
 def _require_text(text: str) -> None:

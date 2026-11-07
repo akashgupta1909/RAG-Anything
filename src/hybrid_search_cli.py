@@ -3,13 +3,45 @@
 import argparse
 import sys
 
-from lib.dataset import load_movies
-from lib.hybrid_search import HybridSearch, normalize_scores
+from config import HYBRID_ALPHA, RRF_K
+from lib.hybrid_search import (
+    HybridResult,
+    RRFResult,
+    normalize_scores,
+    rrf_search,
+    weighted_search,
+)
+
+DESCRIPTION_PREVIEW_CHARS = 100
 
 
-def main() -> None:
+def _format_rank(rank: int | None) -> str:
+    return "-" if rank is None else str(rank)
+
+
+def _print_weighted_results(results: list[HybridResult]) -> None:
+    for position, result in enumerate(results, start=1):
+        print(f"{position}. {result.movie['title']}")
+        print(f"  Hybrid Score: {result.hybrid_score:.3f}")
+        print(f"  BM25: {result.bm25_score:.3f}, Semantic: {result.semantic_score:.3f}")
+        print(f"  {result.movie['description'][:DESCRIPTION_PREVIEW_CHARS]}...")
+
+
+def _print_rrf_results(results: list[RRFResult]) -> None:
+    for position, result in enumerate(results, start=1):
+        print(f"{position}. {result.movie['title']}")
+        print(f"  RRF Score: {result.rrf_score:.3f}")
+        print(
+            f"  BM25 Rank: {_format_rank(result.bm25_rank)}, "
+            f"Semantic Rank: {_format_rank(result.semantic_rank)}"
+        )
+        print(f"  {result.movie['description'][:DESCRIPTION_PREVIEW_CHARS]}...")
+        print()
+
+
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Hybrid Search CLI")
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(dest="command", required=True)
 
     normalize_parser = subparsers.add_parser(
         "normalize", help="Min-max normalize a list of scores"
@@ -25,7 +57,7 @@ def main() -> None:
     weighted_parser.add_argument(
         "--alpha",
         type=float,
-        default=0.5,
+        default=HYBRID_ALPHA,
         help="Weight of BM25 vs semantic (1.0 = BM25 only, 0.0 = semantic only)",
     )
     weighted_parser.add_argument(
@@ -40,53 +72,35 @@ def main() -> None:
     rrf_parser.add_argument(
         "-k",
         type=int,
-        default=60,
+        default=RRF_K,
         help="RRF constant: higher flattens rank differences",
     )
     rrf_parser.add_argument(
         "--limit", type=int, default=5, help="Number of results to return"
     )
 
-    args = parser.parse_args()
+    return parser
 
-    match args.command:
-        case "normalize":
-            for score in normalize_scores(args.scores):
-                print(f"* {score:.4f}")
-        case "weighted-search":
-            try:
-                results = HybridSearch(load_movies()).weighted_search(
-                    args.query, args.alpha, args.limit
+
+def main() -> None:
+    args = _build_parser().parse_args()
+
+    try:
+        match args.command:
+            case "normalize":
+                for score in normalize_scores(args.scores):
+                    print(f"* {score:.4f}")
+            case "weighted-search":
+                _print_weighted_results(
+                    weighted_search(args.query, args.alpha, args.limit)
                 )
-            except (FileNotFoundError, RuntimeError, ValueError) as e:
-                print(f"Error: {e}", file=sys.stderr)
-                sys.exit(1)
-            for i, result in enumerate(results, start=1):
-                print(f"{i}. {result.movie['title']}")
-                print(f"  Hybrid Score: {result.hybrid_score:.3f}")
-                print(
-                    f"  BM25: {result.bm25_score:.3f}, "
-                    f"Semantic: {result.semantic_score:.3f}"
-                )
-                print(f"  {result.movie['description'][:100]}...")
-        case "rrf-search":
-            try:
-                rrf_results = HybridSearch(load_movies()).rrf_search(
-                    args.query, args.k, args.limit
-                )
-            except (FileNotFoundError, RuntimeError, ValueError) as e:
-                print(f"Error: {e}", file=sys.stderr)
-                sys.exit(1)
-            for i, rrf in enumerate(rrf_results, start=1):
-                bm25_rank = "-" if rrf.bm25_rank is None else rrf.bm25_rank
-                semantic_rank = "-" if rrf.semantic_rank is None else rrf.semantic_rank
-                print(f"{i}. {rrf.movie['title']}")
-                print(f"  RRF Score: {rrf.rrf_score:.3f}")
-                print(f"  BM25 Rank: {bm25_rank}, Semantic Rank: {semantic_rank}")
-                print(f"  {rrf.movie['description'][:100]}...")
-                print()
-        case _:
-            parser.print_help()
+            case "rrf-search":
+                _print_rrf_results(rrf_search(args.query, args.k, args.limit))
+            case _:
+                raise AssertionError(f"unhandled command: {args.command}")
+    except (FileNotFoundError, RuntimeError, ValueError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

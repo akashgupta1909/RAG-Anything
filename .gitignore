@@ -17,3 +17,5 @@ cache/
 
 # Large dataset (download separately)
 data/movies.json
+
+.env

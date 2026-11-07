@@ -23,3 +23,12 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 # Sentence chunking used for chunked semantic search (sizes are in sentences)
 CHUNK_SIZE = 4
 CHUNK_OVERLAP = 1
+
+# Hybrid search
+# Default weight of BM25 in weighted search (1.0 = BM25 only, 0.0 = semantic only)
+HYBRID_ALPHA = 0.5
+# Reciprocal Rank Fusion constant: higher values flatten the gap between ranks
+RRF_K = 60
+# Each method fetches this many times ``limit`` candidates before fusing, so a
+# movie found by one method usually has a score from the other one too.
+HYBRID_CANDIDATE_MULTIPLIER = 500
