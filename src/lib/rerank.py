@@ -1,6 +1,7 @@
 """Re-rank search results with an LLM."""
 
 import json
+import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import cache
@@ -11,6 +12,8 @@ from sentence_transformers import CrossEncoder
 from config import CROSS_ENCODER_MODEL, RERANK_WORKERS
 from lib.hybrid_search import RRFResult
 from lib.llm import complete
+
+logger = logging.getLogger("search.rerank")
 
 RERANK_METHODS = ("individual", "batch", "cross_encoder")
 MAX_SCORE = 10.0
@@ -139,6 +142,15 @@ def _rerank_cross_encoder(
     scores = cast(list[float], _cross_encoder().predict(pairs).tolist())  # pyright: ignore[reportUnknownMemberType]
     scored = sorted(
         zip(results, scores, strict=True), key=lambda pair: pair[1], reverse=True
+    )
+    logger.debug(
+        "Cross-encoder scores for all %d results:\n%s",
+        len(scored),
+        "\n".join(
+            f"  {position}. {result.movie['title']}: {score:.3f}"
+            f" (rrf={result.rrf_score:.4f})"
+            for position, (result, score) in enumerate(scored, start=1)
+        ),
     )
     return [(result, f"Cross Encoder Score: {s:.3f}") for result, s in scored[:limit]]
 

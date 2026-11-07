@@ -17,6 +17,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = PROJECT_ROOT / "data"
 MOVIES_FILE = DATA_DIR / "movies.json"
 STOPWORDS_FILE = DATA_DIR / "stopwords.txt"
+GOLDEN_DATASET_FILE = DATA_DIR / "golden_dataset.json"
 
 CACHE_DIR = PROJECT_ROOT / "cache"
 INDEX_CACHE_FILE = CACHE_DIR / "inverted_index.pkl"

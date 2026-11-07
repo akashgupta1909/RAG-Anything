@@ -1,6 +1,7 @@
 """Command-line interface for hybrid search."""
 
 import argparse
+import logging
 import sys
 
 from config import HYBRID_ALPHA, RRF_K
@@ -11,8 +12,11 @@ from lib.hybrid_search import (
     rrf_search,
     weighted_search,
 )
+from lib.llm_evaluation import evaluate_results
 from lib.query_enhancement import ENHANCEMENT_METHODS, enhance_query
 from lib.rerank import RERANK_METHODS, rerank
+
+logger = logging.getLogger("search")
 
 DESCRIPTION_PREVIEW_CHARS = 100
 RERANK_FETCH_FACTOR = 5
@@ -44,6 +48,71 @@ def _print_rrf_results(
         )
         print(f"  {result.movie['description'][:DESCRIPTION_PREVIEW_CHARS]}...")
         print()
+
+
+def _describe(results: list[RRFResult]) -> str:
+    """One line per result for the debug log: position, title, RRF score and ranks."""
+    return "\n".join(
+        f"  {position}. {r.movie['title']} (rrf={r.rrf_score:.4f}, "
+        f"bm25={_format_rank(r.bm25_rank)}, semantic={_format_rank(r.semantic_rank)})"
+        for position, r in enumerate(results, start=1)
+    )
+
+
+def _print_evaluation(query: str, results: list[RRFResult]) -> None:
+    scores = evaluate_results(query, results)
+    logger.debug("LLM relevance scores: %s", scores)
+    for position, (result, score) in enumerate(
+        zip(results, scores, strict=True), start=1
+    ):
+        print(f"{position}. {result.movie['title']}: {score}/3")
+
+
+def _run_rrf_search(args: argparse.Namespace) -> None:
+    query: str = args.query
+    logger.debug("Original query: '%s'", query)
+
+    if args.enhance:
+        enhanced = enhance_query(query, args.enhance)
+        logger.debug("Query after %s enhancement: '%s'", args.enhance, enhanced)
+        if enhanced != query:
+            print(f"Enhanced query ({args.enhance}): '{query}' -> '{enhanced}'\n")
+        query = enhanced
+    else:
+        logger.debug("Query enhancement: none")
+
+    if not args.rerank_method:
+        results = rrf_search(query, args.k, args.limit)
+        logger.debug(
+            "RRF results (k=%d, limit=%d):\n%s", args.k, args.limit, _describe(results)
+        )
+        logger.debug("Re-ranking: none")
+        _print_rrf_results(results)
+        if args.evaluate:
+            _print_evaluation(query, results)
+        return
+
+    # Re-ranking can promote results from further down, so fetch more.
+    fetch = args.limit * RERANK_FETCH_FACTOR
+    results = rrf_search(query, args.k, fetch)
+    logger.debug(
+        "RRF results (k=%d, fetched %d):\n%s", args.k, fetch, _describe(results)
+    )
+    print(f"Re-ranking top {len(results)} results using {args.rerank_method} method...")
+    reranked = rerank(args.rerank_method, query, results, args.limit)
+    logger.debug(
+        "Final results after %s re-ranking:\n%s",
+        args.rerank_method,
+        "\n".join(
+            f"  {position}. {r.movie['title']} ({label}, rrf={r.rrf_score:.4f})"
+            for position, (r, label) in enumerate(reranked, start=1)
+        ),
+    )
+    print(f"Reciprocal Rank Fusion Results for '{query}' (k={args.k}):\n")
+    final = [result for result, _ in reranked]
+    _print_rrf_results(final, [label for _, label in reranked])
+    if args.evaluate:
+        _print_evaluation(query, final)
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -92,6 +161,16 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Query enhancement method",
     )
     rrf_parser.add_argument(
+        "--evaluate",
+        action="store_true",
+        help="Rate the results from 0 to 3 with an LLM after printing them",
+    )
+    rrf_parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Log each pipeline stage (query, enhancement, RRF, re-rank) to stderr",
+    )
+    rrf_parser.add_argument(
         "--rerank-method",
         type=str,
         choices=RERANK_METHODS,
@@ -103,6 +182,14 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = _build_parser().parse_args()
+    if getattr(args, "debug", False):
+        # Only the pipeline's own logger is verbose; third-party libraries stay quiet.
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="[%(levelname)s] %(message)s",
+            stream=sys.stderr,
+        )
+        logger.setLevel(logging.DEBUG)
 
     try:
         match args.command:
@@ -114,34 +201,7 @@ def main() -> None:
                     weighted_search(args.query, args.alpha, args.limit)
                 )
             case "rrf-search":
-                query = args.query
-                if args.enhance:
-                    enhanced = enhance_query(query, args.enhance)
-                    if enhanced != query:
-                        print(
-                            f"Enhanced query ({args.enhance}): "
-                            f"'{query}' -> '{enhanced}'\n"
-                        )
-                    query = enhanced
-                if args.rerank_method:
-                    # Re-ranking can promote results from further down, so fetch more.
-                    results = rrf_search(
-                        query, args.k, args.limit * RERANK_FETCH_FACTOR
-                    )
-                    print(
-                        f"Re-ranking top {len(results)} results using "
-                        f"{args.rerank_method} method..."
-                    )
-                    reranked = rerank(args.rerank_method, query, results, args.limit)
-                    print(
-                        f"Reciprocal Rank Fusion Results for '{query}' (k={args.k}):\n"
-                    )
-                    _print_rrf_results(
-                        [result for result, _ in reranked],
-                        [label for _, label in reranked],
-                    )
-                else:
-                    _print_rrf_results(rrf_search(query, args.k, args.limit))
+                _run_rrf_search(args)
             case _:
                 raise AssertionError(f"unhandled command: {args.command}")
     except (FileNotFoundError, RuntimeError, ValueError) as e:

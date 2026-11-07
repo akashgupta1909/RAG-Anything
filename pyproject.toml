@@ -17,6 +17,9 @@ dependencies = [
 keyword-search = "keyword_search_cli:main"
 semantic-search = "semantic_search_cli:main"
 hybrid-search = "hybrid_search_cli:main"
+evaluation = "evaluation_cli:main"
+augmented-generation = "augmented_generation_cli:main"
+describe-image = "describe_image_cli:main"
 
 [build-system]
 requires = ["hatchling"]

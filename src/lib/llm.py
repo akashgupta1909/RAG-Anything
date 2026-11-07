@@ -6,6 +6,7 @@ from functools import cache
 
 from dotenv import load_dotenv
 from openai import OpenAI, OpenAIError, RateLimitError
+from openai.types.chat import ChatCompletionContentPartParam
 
 from config import LLM_PROVIDERS, LLMProvider
 
@@ -19,7 +20,11 @@ def _client(provider: LLMProvider, api_key: str) -> OpenAI:
     return OpenAI(base_url=provider.base_url, api_key=api_key)
 
 
-def _ask(provider: LLMProvider, api_key: str, prompt: str, max_tokens: int) -> str:
+# A prompt is plain text, or a list of text and image parts for multimodal models.
+Prompt = str | list[ChatCompletionContentPartParam]
+
+
+def _ask(provider: LLMProvider, api_key: str, prompt: Prompt, max_tokens: int) -> str:
     response = _client(provider, api_key).chat.completions.create(
         model=provider.model,
         messages=[{"role": "user", "content": prompt}],
@@ -43,7 +48,7 @@ def _retry_wait(error: RateLimitError, attempt: int) -> float:
 
 
 def _ask_with_retries(
-    provider: LLMProvider, api_key: str, prompt: str, max_tokens: int
+    provider: LLMProvider, api_key: str, prompt: Prompt, max_tokens: int
 ) -> str:
     for attempt in range(RATE_LIMIT_RETRIES):
         try:
@@ -55,7 +60,7 @@ def _ask_with_retries(
     raise AssertionError("unreachable")
 
 
-def complete(prompt: str, max_tokens: int = 100) -> str:
+def complete(prompt: Prompt, max_tokens: int = 100) -> str:
     """Send ``prompt`` to the first provider that answers and return the stripped reply.
 
     Sampling is deterministic and the reply is capped at ``max_tokens``, since every
