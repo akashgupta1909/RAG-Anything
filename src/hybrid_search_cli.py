@@ -12,8 +12,10 @@ from lib.hybrid_search import (
     weighted_search,
 )
 from lib.query_enhancement import ENHANCEMENT_METHODS, enhance_query
+from lib.rerank import RERANK_METHODS, rerank
 
 DESCRIPTION_PREVIEW_CHARS = 100
+RERANK_FETCH_FACTOR = 5
 
 
 def _format_rank(rank: int | None) -> str:
@@ -28,9 +30,13 @@ def _print_weighted_results(results: list[HybridResult]) -> None:
         print(f"  {result.movie['description'][:DESCRIPTION_PREVIEW_CHARS]}...")
 
 
-def _print_rrf_results(results: list[RRFResult]) -> None:
+def _print_rrf_results(
+    results: list[RRFResult], rerank_labels: list[str] | None = None
+) -> None:
     for position, result in enumerate(results, start=1):
         print(f"{position}. {result.movie['title']}")
+        if rerank_labels is not None:
+            print(f"  {rerank_labels[position - 1]}")
         print(f"  RRF Score: {result.rrf_score:.3f}")
         print(
             f"  BM25 Rank: {_format_rank(result.bm25_rank)}, "
@@ -85,6 +91,12 @@ def _build_parser() -> argparse.ArgumentParser:
         choices=ENHANCEMENT_METHODS,
         help="Query enhancement method",
     )
+    rrf_parser.add_argument(
+        "--rerank-method",
+        type=str,
+        choices=RERANK_METHODS,
+        help="Re-rank the results with an LLM",
+    )
 
     return parser
 
@@ -111,7 +123,25 @@ def main() -> None:
                             f"'{query}' -> '{enhanced}'\n"
                         )
                     query = enhanced
-                _print_rrf_results(rrf_search(query, args.k, args.limit))
+                if args.rerank_method:
+                    # Re-ranking can promote results from further down, so fetch more.
+                    results = rrf_search(
+                        query, args.k, args.limit * RERANK_FETCH_FACTOR
+                    )
+                    print(
+                        f"Re-ranking top {len(results)} results using "
+                        f"{args.rerank_method} method..."
+                    )
+                    reranked = rerank(args.rerank_method, query, results, args.limit)
+                    print(
+                        f"Reciprocal Rank Fusion Results for '{query}' (k={args.k}):\n"
+                    )
+                    _print_rrf_results(
+                        [result for result, _ in reranked],
+                        [label for _, label in reranked],
+                    )
+                else:
+                    _print_rrf_results(rrf_search(query, args.k, args.limit))
             case _:
                 raise AssertionError(f"unhandled command: {args.command}")
     except (FileNotFoundError, RuntimeError, ValueError) as e:

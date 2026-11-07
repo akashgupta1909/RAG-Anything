@@ -1,11 +1,6 @@
 """Improve search queries with an LLM before they are searched."""
 
-import os
-
-from dotenv import load_dotenv
-from openai import OpenAI, OpenAIError
-
-from config import ENHANCEMENT_MODEL, OPENROUTER_BASE_URL
+from lib.llm import complete
 
 ENHANCEMENT_METHODS = ("spell", "rewrite", "expand")
 
@@ -58,32 +53,16 @@ User query: "{query}"
 """
 
 
-def _complete(prompt: str) -> str:
-    load_dotenv()
-    api_key = os.environ.get("OPENROUTER_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENROUTER_API_KEY environment variable not set")
-    client = OpenAI(base_url=OPENROUTER_BASE_URL, api_key=api_key)
-    try:
-        response = client.chat.completions.create(
-            model=ENHANCEMENT_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-        )
-    except OpenAIError as e:
-        raise RuntimeError(f"Query enhancement request failed: {e}") from e
-    return (response.choices[0].message.content or "").strip()
-
-
 def enhance_query(query: str, method: str) -> str:
     """Return ``query`` improved by ``method``, or unchanged if the LLM gives nothing."""
     match method:
         case "spell":
-            return _complete(_spell_prompt(query)) or query
+            return complete(_spell_prompt(query)) or query
         case "rewrite":
-            return _complete(_rewrite_prompt(query)) or query
+            return complete(_rewrite_prompt(query)) or query
         case "expand":
             # The LLM returns only the extra terms; keep the original query in front.
-            extra_terms = _complete(_expand_prompt(query))
+            extra_terms = complete(_expand_prompt(query))
             return f"{query} {extra_terms}" if extra_terms else query
         case _:
             raise ValueError(f"unknown enhancement method: {method!r}")

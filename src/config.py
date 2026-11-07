@@ -1,6 +1,16 @@
 """Paths and tuning parameters used by the search engine."""
 
+from dataclasses import dataclass
 from pathlib import Path
+
+
+@dataclass(frozen=True, slots=True)
+class LLMProvider:
+    name: str
+    base_url: str
+    api_key_env: str  # environment variable holding the API key
+    model: str
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,6 +43,25 @@ RRF_K = 60
 # movie found by one method usually has a score from the other one too.
 HYBRID_CANDIDATE_MULTIPLIER = 500
 
-# Query enhancement (LLM served through OpenRouter; key read from OPENROUTER_API_KEY)
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-ENHANCEMENT_MODEL = "openrouter/free"
+# LLM providers for query enhancement and re-ranking, tried in this order: a call
+# falls through to the next one when a provider has no key or its request fails
+# (rate limit, outage, ...). All are OpenAI-compatible APIs.
+LLM_PROVIDERS = (
+    LLMProvider(
+        name="Groq",
+        base_url="https://api.groq.com/openai/v1",
+        api_key_env="GROQ_API_KEY",
+        model="qwen/qwen3.8-27b",
+    ),
+    LLMProvider(
+        name="OpenRouter",
+        base_url="https://openrouter.ai/api/v1",
+        api_key_env="OPENROUTER_API_KEY",
+        model="openrouter/free",
+    ),
+)
+# LLM calls re-ranking runs at once
+RERANK_WORKERS = 4
+
+# Local model that re-ranks (query, movie) pairs by relevance
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-TinyBERT-L2-v2"
