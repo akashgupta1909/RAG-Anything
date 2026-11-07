@@ -101,8 +101,10 @@ class InvertedIndex:
         length_norm = 1 - b + b * (self.doc_lengths[doc_id] / self._avg_doc_length)
         return (tf * (k1 + 1)) / (tf + k1 * length_norm)
 
-    def bm25_search(self, query: str, limit: int = 5) -> list[Movie]:
-        """Return up to ``limit`` movies ranked by BM25 score for ``query``."""
+    def bm25_search_with_scores(
+        self, query: str, limit: int = 5
+    ) -> list[tuple[Movie, float]]:
+        """Return up to ``limit`` ``(movie, BM25 score)`` pairs, best first."""
         scores: defaultdict[int, float] = defaultdict(float)
         for token in set(tokenize(query)):
             idf = self.get_bm25_idf(token)
@@ -110,7 +112,11 @@ class InvertedIndex:
                 scores[doc_id] += idf * self.get_bm25_tf(doc_id, token)
         # Ties are broken by document id so results are deterministic.
         ranked = sorted(scores, key=lambda doc_id: (-scores[doc_id], doc_id))
-        return [self.docmap[doc_id] for doc_id in ranked[:limit]]
+        return [(self.docmap[doc_id], scores[doc_id]) for doc_id in ranked[:limit]]
+
+    def bm25_search(self, query: str, limit: int = 5) -> list[Movie]:
+        """Return up to ``limit`` movies ranked by BM25 score for ``query``."""
+        return [movie for movie, _ in self.bm25_search_with_scores(query, limit)]
 
     def build(self, on_progress: ProgressCallback | None = None) -> None:
         """Index every movie in the dataset."""

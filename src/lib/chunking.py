@@ -20,13 +20,22 @@ def semantic_chunk(text: str, max_chunk_size: int = 4, overlap: int = 0) -> list
             f"overlap ({overlap}) must be smaller than max_chunk_size ({max_chunk_size})"
         )
 
-    sentences = re.split(SENTENCE_BOUNDARY, text.strip())
+    text = text.strip()
+    if not text:
+        return []
+
+    sentences = re.split(SENTENCE_BOUNDARY, text)
+    if len(sentences) == 1 and not text.endswith((".", "!", "?")):
+        sentences = [text]  # a lone sentence without end punctuation stays whole
+    sentences = [s.strip() for s in sentences]
     sentences = [s for s in sentences if s]
 
     chunks: list[str] = []
     step = max_chunk_size - overlap
     for start in range(0, len(sentences), step):
-        chunks.append(" ".join(sentences[start : start + max_chunk_size]))
+        chunk = " ".join(sentences[start : start + max_chunk_size]).strip()
+        if chunk:
+            chunks.append(chunk)
         if start + max_chunk_size >= len(sentences):
             break  # the rest would only repeat sentences already covered
     return chunks
