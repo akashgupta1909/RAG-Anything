@@ -32,3 +32,7 @@ RRF_K = 60
 # Each method fetches this many times ``limit`` candidates before fusing, so a
 # movie found by one method usually has a score from the other one too.
 HYBRID_CANDIDATE_MULTIPLIER = 500
+
+# Query enhancement (LLM served through OpenRouter; key read from OPENROUTER_API_KEY)
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
+ENHANCEMENT_MODEL = "openrouter/free"

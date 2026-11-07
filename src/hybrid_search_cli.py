@@ -11,6 +11,7 @@ from lib.hybrid_search import (
     rrf_search,
     weighted_search,
 )
+from lib.query_enhancement import ENHANCEMENT_METHODS, enhance_query
 
 DESCRIPTION_PREVIEW_CHARS = 100
 
@@ -78,6 +79,12 @@ def _build_parser() -> argparse.ArgumentParser:
     rrf_parser.add_argument(
         "--limit", type=int, default=5, help="Number of results to return"
     )
+    rrf_parser.add_argument(
+        "--enhance",
+        type=str,
+        choices=ENHANCEMENT_METHODS,
+        help="Query enhancement method",
+    )
 
     return parser
 
@@ -95,7 +102,16 @@ def main() -> None:
                     weighted_search(args.query, args.alpha, args.limit)
                 )
             case "rrf-search":
-                _print_rrf_results(rrf_search(args.query, args.k, args.limit))
+                query = args.query
+                if args.enhance:
+                    enhanced = enhance_query(query, args.enhance)
+                    if enhanced != query:
+                        print(
+                            f"Enhanced query ({args.enhance}): "
+                            f"'{query}' -> '{enhanced}'\n"
+                        )
+                    query = enhanced
+                _print_rrf_results(rrf_search(query, args.k, args.limit))
             case _:
                 raise AssertionError(f"unhandled command: {args.command}")
     except (FileNotFoundError, RuntimeError, ValueError) as e:
