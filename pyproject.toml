@@ -8,6 +8,7 @@ dependencies = [
     "nltk==3.9.1",
     "numpy==2.3.3",
     "openai==2.44.0",
+    "pillow>=13.0.0",
     "python-dotenv==1.1.0",
     "sentence-transformers>=6.2.0",
     "transformers>=5.22.1",
@@ -20,6 +21,7 @@ hybrid-search = "hybrid_search_cli:main"
 evaluation = "evaluation_cli:main"
 augmented-generation = "augmented_generation_cli:main"
 describe-image = "describe_image_cli:main"
+multimodal-search = "multimodal_search_cli:main"
 
 [build-system]
 requires = ["hatchling"]

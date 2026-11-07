@@ -66,3 +66,6 @@ RERANK_WORKERS = 4
 
 # Local model that re-ranks (query, movie) pairs by relevance
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-TinyBERT-L2-v2"
+
+# CLIP model that embeds images (and text) into one shared vector space
+CLIP_MODEL = "clip-ViT-B-32"
