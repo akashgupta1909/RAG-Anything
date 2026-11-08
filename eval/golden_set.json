@@ -1,0 +1,381 @@
+{
+  "description": "Hand-labelled questions with the documentation pages that answer them. relevant_urls are document-level (any chunk of the page counts). Categories: factual, how-to, identifier (exact API / flag names, where BM25 matters), design (system design reasoning), cross-domain (needs several domains).",
+  "version": 1,
+  "examples": [
+    {
+      "id": "py-01",
+      "question": "What is the difference between asyncio.gather and asyncio.TaskGroup for running coroutines concurrently?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/asyncio-task.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "identifier",
+      "reference_answer": "Both run awaitables concurrently. TaskGroup is an async context manager that gives stronger safety guarantees: if any task fails, the remaining tasks in the group are cancelled and the errors are raised together as an ExceptionGroup. gather returns results in order and, by default, does not cancel the other awaitables when one raises."
+    },
+    {
+      "id": "py-02",
+      "question": "How does the global interpreter lock affect multi-threaded CPU-bound Python code?",
+      "relevant_urls": [
+        "https://docs.python.org/3/glossary.html",
+        "https://docs.python.org/3/library/threading.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "factual",
+      "reference_answer": "The GIL ensures only one thread executes Python bytecode at a time, so CPU-bound threads do not run in parallel on multiple cores in the default build; use multiprocessing or concurrent.futures.ProcessPoolExecutor (or the free-threaded build) for CPU-bound parallelism. Threads remain useful for I/O-bound work."
+    },
+    {
+      "id": "py-03",
+      "question": "What happens when functools.lru_cache is used with maxsize=None?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/functools.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "identifier",
+      "reference_answer": "With maxsize=None the LRU feature is disabled and the cache can grow without bound; functools.cache is equivalent shorthand."
+    },
+    {
+      "id": "py-04",
+      "question": "How do I make a dataclass immutable?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/dataclasses.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "how-to",
+      "reference_answer": "Pass frozen=True to the @dataclass decorator; assigning to fields then raises FrozenInstanceError."
+    },
+    {
+      "id": "py-05",
+      "question": "When should I use a tuple instead of a list in Python?",
+      "relevant_urls": [
+        "https://docs.python.org/3/tutorial/datastructures.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "factual",
+      "reference_answer": "Tuples are immutable and usually hold heterogeneous elements accessed by unpacking or indexing; lists are mutable and usually hold homogeneous elements accessed by iteration."
+    },
+    {
+      "id": "py-06",
+      "question": "How do I configure Python logging to write to a file that rotates when it reaches a certain size?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/logging.handlers.html",
+        "https://docs.python.org/3/howto/logging-cookbook.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "how-to",
+      "reference_answer": "Use logging.handlers.RotatingFileHandler with maxBytes and backupCount, attach it to a logger and set a formatter."
+    },
+    {
+      "id": "py-07",
+      "question": "What does typing.Protocol provide and how is it different from an abstract base class?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/typing.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "identifier",
+      "reference_answer": "Protocol classes define structural subtyping (static duck typing): a class matches the protocol if it has the required members, without inheriting from it. ABCs require explicit subclassing or registration (nominal subtyping). runtime_checkable allows isinstance checks."
+    },
+    {
+      "id": "py-08",
+      "question": "How can I write a context manager without defining a class with __enter__ and __exit__?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/contextlib.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "how-to",
+      "reference_answer": "Decorate a generator function with contextlib.contextmanager: code before the yield runs on entry, the yielded value is bound by 'as', and code after the yield (ideally in finally) runs on exit."
+    },
+    {
+      "id": "py-09",
+      "question": "When should I use ProcessPoolExecutor rather than ThreadPoolExecutor?",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/concurrent.futures.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "factual",
+      "reference_answer": "ProcessPoolExecutor runs calls in separate processes, side-stepping the GIL, so it suits CPU-bound work; arguments and results must be picklable. ThreadPoolExecutor suits I/O-bound work."
+    },
+    {
+      "id": "py-10",
+      "question": "How do I sort a list of dictionaries by one of their keys?",
+      "relevant_urls": [
+        "https://docs.python.org/3/howto/sorting.html"
+      ],
+      "domains": [
+        "python"
+      ],
+      "category": "how-to",
+      "reference_answer": "Use sorted(items, key=lambda d: d['name']) or key=operator.itemgetter('name'); pass reverse=True for descending order. Sorts are stable."
+    },
+    {
+      "id": "k8s-01",
+      "question": "What is the difference between a Deployment and a StatefulSet?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "factual",
+      "reference_answer": "Deployments manage interchangeable stateless Pods. StatefulSets give each Pod a stable, unique network identity and stable persistent storage, with ordered, graceful deployment, scaling and rolling updates."
+    },
+    {
+      "id": "k8s-02",
+      "question": "How does a Kubernetes Service find its Pods and distribute traffic to them?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/services-networking/service/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "factual",
+      "reference_answer": "A Service uses a label selector to target Pods; the matching Pods' addresses are tracked as EndpointSlices and traffic to the Service's stable IP/DNS name is spread across them (by kube-proxy)."
+    },
+    {
+      "id": "k8s-03",
+      "question": "How do I configure a liveness probe that restarts a container when an HTTP health endpoint fails?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "how-to",
+      "reference_answer": "Add livenessProbe with httpGet (path and port) to the container spec, tuning initialDelaySeconds, periodSeconds and failureThreshold; the kubelet restarts the container when the probe fails."
+    },
+    {
+      "id": "k8s-04",
+      "question": "How does the Horizontal Pod Autoscaler calculate the desired number of replicas?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "factual",
+      "reference_answer": "desiredReplicas = ceil(currentReplicas * currentMetricValue / desiredMetricValue), with a tolerance that skips small changes."
+    },
+    {
+      "id": "k8s-05",
+      "question": "How do I roll back a Deployment with kubectl rollout undo?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "identifier",
+      "reference_answer": "Run kubectl rollout undo deployment/<name> to go back to the previous revision, or add --to-revision=<n>; kubectl rollout history lists revisions."
+    },
+    {
+      "id": "k8s-06",
+      "question": "What are init containers and how do they differ from regular containers?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/pods/init-containers/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "factual",
+      "reference_answer": "Init containers run to completion, one after another, before the app containers start; each must succeed before the next starts. They are used for setup steps and do not support readiness probes like regular containers."
+    },
+    {
+      "id": "k8s-07",
+      "question": "How do I mount a Secret as files inside a Pod?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/configuration/secret/",
+        "https://kubernetes.io/docs/tasks/inject-data-application/distribute-credentials-secure/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "how-to",
+      "reference_answer": "Declare a volume of type secret referencing secretName, and add a volumeMount in the container; each key becomes a file under the mount path."
+    },
+    {
+      "id": "k8s-08",
+      "question": "What is a PersistentVolumeClaim and how does it bind to a PersistentVolume?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/storage/persistent-volumes/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "factual",
+      "reference_answer": "A PVC is a user's request for storage (size, access modes, storage class). The control plane binds it to a matching PV, or a StorageClass provisions one dynamically; the binding is one-to-one."
+    },
+    {
+      "id": "k8s-09",
+      "question": "How can I restrict which Pods are allowed to send traffic to my database Pods?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/services-networking/network-policies/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "how-to",
+      "reference_answer": "Create a NetworkPolicy selecting the database Pods with an ingress rule that only allows traffic from Pods (or namespaces) matching specific labels; it requires a network plugin that enforces NetworkPolicy."
+    },
+    {
+      "id": "k8s-10",
+      "question": "What does a PodDisruptionBudget protect against?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+        "https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
+      ],
+      "domains": [
+        "kubernetes"
+      ],
+      "category": "identifier",
+      "reference_answer": "A PDB limits how many replicas of an application can be down at once due to voluntary disruptions (e.g. node drains), via minAvailable or maxUnavailable. It does not prevent involuntary disruptions."
+    },
+    {
+      "id": "sd-01",
+      "question": "What are the trade-offs between consistency and availability according to the CAP theorem?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Under a network partition a distributed system must choose consistency (CP: may return errors/timeouts) or availability (AP: returns the most recent available version, which may be stale, with eventual consistency)."
+    },
+    {
+      "id": "sd-02",
+      "question": "When should I use write-through caching versus write-behind (write-back) caching?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Write-through writes to the cache and the database synchronously: data is never stale but writes are slower. Write-behind writes to the cache and asynchronously to the database: faster writes but risk of data loss if the cache fails."
+    },
+    {
+      "id": "sd-03",
+      "question": "How would you design a URL shortener like Bit.ly?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/pastebin/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Generate a short key (e.g. hash of the URL/IP/timestamp encoded in Base62), store key->URL in a database, serve reads through a cache and load-balanced read replicas, and handle analytics and expiration asynchronously."
+    },
+    {
+      "id": "sd-04",
+      "question": "How does fan-out work when delivering tweets to followers' home timelines?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/twitter/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "On posting, a fan-out service looks up the user's followers and inserts the tweet id into each follower's home timeline stored in a memory cache (e.g. Redis lists); users with very many followers are handled differently to avoid huge fan-outs."
+    },
+    {
+      "id": "sd-05",
+      "question": "How should a web crawler avoid crawling duplicate pages?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/web_crawler/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "De-duplicate URLs (e.g. with a set or MapReduce over the links) and detect duplicate content via page signatures such as Jaccard similarity/simhash, keeping a crawled-pages store and re-crawl timestamps."
+    },
+    {
+      "id": "sd-06",
+      "question": "What is the difference between master-slave and master-master database replication?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Master-slave: one master serves reads and writes and replicates to read-only slaves. Master-master: both masters serve reads and writes and coordinate, which needs a load balancer or app logic and risks conflicts and latency from synchronisation."
+    },
+    {
+      "id": "sd-07",
+      "question": "How would you scale a web application from a single server to millions of users on AWS?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/scaling_aws/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Iterate: separate the database (RDS) from the web server, add a load balancer with horizontally scaled stateless web servers, a CDN for static content, read replicas and caching (ElastiCache), autoscaling, then sharding/NoSQL and asynchronous queues as load grows, measuring bottlenecks at each step."
+    },
+    {
+      "id": "x-01",
+      "question": "Design a rate-limited HTTP API service written with Python asyncio and deploy it on Kubernetes so it autoscales under load.",
+      "relevant_urls": [
+        "https://docs.python.org/3/library/asyncio-task.html",
+        "https://kubernetes.io/docs/concepts/workloads/autoscaling/horizontal-pod-autoscale/",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/deployment/",
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+      ],
+      "domains": [
+        "python",
+        "kubernetes",
+        "system_design"
+      ],
+      "category": "cross-domain",
+      "reference_answer": null
+    },
+    {
+      "id": "x-02",
+      "question": "I want a cache tier in front of my database: which caching strategy should my application use, and how should I run the cache nodes with stable identities on Kubernetes?",
+      "relevant_urls": [
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md",
+        "https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/"
+      ],
+      "domains": [
+        "system_design",
+        "kubernetes"
+      ],
+      "category": "cross-domain",
+      "reference_answer": null
+    },
+    {
+      "id": "x-03",
+      "question": "How should a Python service shut down gracefully when Kubernetes terminates its Pod?",
+      "relevant_urls": [
+        "https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/",
+        "https://docs.python.org/3/library/signal.html",
+        "https://docs.python.org/3/library/asyncio-runner.html"
+      ],
+      "domains": [
+        "kubernetes",
+        "python"
+      ],
+      "category": "cross-domain",
+      "reference_answer": "Kubernetes sends SIGTERM, waits terminationGracePeriodSeconds (default 30s), then sends SIGKILL; the Pod is removed from Service endpoints. The Python process should handle SIGTERM (signal module, or loop.add_signal_handler in asyncio) to stop accepting work, finish in-flight requests and exit before the grace period ends; a preStop hook can add delay."
+    }
+  ]
+}
