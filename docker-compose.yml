@@ -1,0 +1,33 @@
+# Production-like local stack: Qdrant server + the RAG API.
+#
+#   docker compose up -d qdrant                        # vector DB only
+#   docker compose run --rm api python main.py ingest  # index the documents
+#   docker compose up -d api                           # serve on http://localhost:8000/docs
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.20.0
+    ports:
+      - "6333:6333"   # REST + dashboard at http://localhost:6333/dashboard
+      - "6334:6334"   # gRPC
+    volumes:
+      - qdrant_data:/qdrant/storage
+    restart: unless-stopped
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      QDRANT_URL: http://qdrant:6333
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data/raw:/app/data/raw       # downloaded sources (reused across runs)
+      - models:/app/data/models        # ONNX model cache
+      - ./logs:/app/logs
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+
+volumes:
+  qdrant_data:
+  models:
