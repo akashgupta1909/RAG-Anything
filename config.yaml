@@ -169,13 +169,137 @@ domains:
           strip_prefix: content/en/docs/
           replace: {"_index.md": "", ".md": "/"}
 
+  - name: golang
+    description: >-
+      The Go programming language: the language specification and memory model,
+      Effective Go, goroutines and channels, generics, error handling, modules
+      and dependency management, testing and fuzzing, the garbage collector,
+      database/sql, security, diagnostics and the official tutorials.
+    sources:
+      - name: go-website
+        kind: git
+        location: https://github.com/golang/website.git
+        ref: master
+        sparse_paths: [_content/doc]
+        include:
+          - "_content/doc/**/*.md"
+          - "_content/doc/**/*.html"
+        exclude:
+          - "_content/doc/go1.[0-9].md"        # release notes before Go 1.20
+          - "_content/doc/go1.1[0-9].md"
+          - "_content/doc/devel/*"
+          - "_content/doc/conduct.md"
+          - "_content/doc/contrib*"
+          - "_content/doc/gccgo*"
+          - "_content/doc/copyright.md"
+          - "_content/doc/articles/wiki/*"
+        url:
+          base: https://go.dev/
+          strip_prefix: _content/
+          replace: {"/index.html": "/", "/index.md": "/", ".html": "", ".md": ""}
+      - name: go-spec
+        kind: git
+        location: https://github.com/golang/go.git
+        ref: master
+        sparse_paths: [doc]
+        include: [doc/go_spec.html, doc/go_mem.html]
+        url:
+          base: https://go.dev/ref/
+          strip_prefix: doc/
+          replace: {"go_spec.html": "spec", "go_mem.html": "mem"}
+
+  - name: javascript
+    description: >-
+      The JavaScript language and browser Web APIs (MDN): syntax, closures,
+      prototypes and classes, the event loop, promises and async/await,
+      iterators and generators, modules, Array/Object/Map/Set/Proxy/JSON
+      reference, regular expressions, error messages, and browser APIs such as
+      fetch, Web Workers, Service Workers, IndexedDB, WebSockets, Server-Sent
+      Events, Web Storage, History and Performance.
+    sources:
+      - name: mdn
+        kind: git
+        location: https://github.com/mdn/content.git
+        ref: main
+        sparse_paths:
+          - files/en-us/web/javascript
+          - files/en-us/web/api/fetch_api
+          - files/en-us/web/api/service_worker_api
+          - files/en-us/web/api/web_workers_api
+          - files/en-us/web/api/intersection_observer_api
+          - files/en-us/web/api/indexeddb_api
+          - files/en-us/web/api/websockets_api
+          - files/en-us/web/api/server-sent_events
+          - files/en-us/web/api/history_api
+          - files/en-us/web/api/web_storage_api
+          - files/en-us/web/api/performance_api
+          - files/en-us/web/api/broadcast_channel_api
+        include: ["files/en-us/web/**/index.md"]
+        exclude:
+          - "*/global_objects/temporal/*"
+          - "*/global_objects/intl/*"
+          - "*/global_objects/*int*array/*"
+          - "*/global_objects/float*array/*"
+          - "*/global_objects/atomics/*"
+          - "*/global_objects/dataview/*"
+        url:
+          base: https://developer.mozilla.org/en-US/docs/
+          front_matter_key: slug
+
+  - name: react
+    description: >-
+      React (react.dev): components, JSX, props and state, hooks (useState,
+      useEffect, useMemo, useCallback, useRef, useContext, useReducer,
+      useTransition), rendering and re-rendering, effects, context, refs,
+      Server Components, Suspense, the React Compiler, react-dom APIs and the
+      Rules of React.
+    sources:
+      - name: react-dev
+        kind: git
+        location: https://github.com/reactjs/react.dev.git
+        ref: main
+        sparse_paths: [src/content/learn, src/content/reference]
+        include:
+          - "src/content/learn/**/*.md"
+          - "src/content/reference/react/**/*.md"
+          - "src/content/reference/react-dom/**/*.md"
+          - "src/content/reference/rules/**/*.md"
+          - "src/content/reference/rsc/**/*.md"
+        url:
+          base: https://react.dev/
+          strip_prefix: src/content/
+          replace: {"/index.md": "", ".md": ""}
+
+  - name: react_native
+    description: >-
+      React Native: building native iOS and Android apps with React, core
+      components (View, Text, FlatList, ScrollView, Image, TextInput), styling
+      and Flexbox layout, navigation, networking, animations, gestures,
+      performance, the New Architecture (Fabric, TurboModules), native modules
+      and platform-specific code, debugging and publishing.
+    sources:
+      - name: react-native-website
+        kind: git
+        location: https://github.com/react/react-native-website.git
+        ref: main
+        sparse_paths: [docs]
+        include: ["docs/*.md"]
+        exclude: ["docs/_*"]
+        url:
+          base: https://reactnative.dev/docs/
+          front_matter_key: id
+          strip_prefix: docs/
+          replace: {".md": ""}
+
   - name: system_design
     description: >-
-      Distributed system design: scalability, load balancing, caching, CDNs,
-      databases (replication, sharding, SQL vs NoSQL), consistency and
-      availability (CAP), message queues, microservices, rate limiting, and
-      worked designs such as a URL shortener (Pastebin), Twitter timeline,
-      web crawler, social graph and scaling on AWS.
+      Backend and distributed system design: scalability, load balancing,
+      caching, CDNs, databases (replication, sharding, indexes, SQL vs NoSQL),
+      consistency and availability (CAP, PACELC), message queues and pub/sub,
+      microservices, API gateways, rate limiting, consistent hashing,
+      networking (DNS, TCP/UDP, HTTP), security (OAuth, SSO) and worked designs
+      such as a URL shortener, Twitter, WhatsApp, Netflix, Uber, web crawler
+      and scaling on AWS.
     sources:
       - name: system-design-primer
         kind: git
@@ -188,3 +312,72 @@ domains:
         url:
           base: https://github.com/donnemartin/system-design-primer/blob/master/
         asset_base: https://raw.githubusercontent.com/donnemartin/system-design-primer/master/
+      # CC BY-NC-ND 4.0: indexed for personal, non-commercial use; not redistributed.
+      - name: bytebytego-system-design-101
+        kind: git
+        location: https://github.com/ByteByteGoHq/system-design-101.git
+        ref: main
+        sparse_paths: [data/guides]
+        include: ["data/guides/*.md"]
+        images: true
+        download_images: true
+        url:
+          base: https://bytebytego.com/guides/
+          strip_prefix: data/guides/
+          replace: {".md": "/"}
+      # CC BY-NC-ND 4.0: indexed for personal, non-commercial use; not redistributed.
+      - name: karanpratapsingh-system-design
+        kind: git
+        location: https://github.com/karanpratapsingh/system-design.git
+        ref: main
+        include: [README.md]
+        images: true
+        download_images: true
+        url:
+          base: https://github.com/karanpratapsingh/system-design/blob/main/
+
+  - name: frontend_system_design
+    description: >-
+      Frontend architecture and front-end system design: rendering strategies
+      (CSR, SSR, SSG, hydration, streaming), web performance and Core Web
+      Vitals (LCP, CLS, INP), code splitting and lazy loading, caching, service
+      workers, offline and Progressive Web Apps, image optimisation,
+      accessibility, state management and data fetching, component/API design
+      and front-end interview designs (news feed, autocomplete, chat, image
+      carousel).
+    sources:
+      - name: front-end-interview-handbook
+        kind: git
+        location: https://github.com/yangshun/front-end-interview-handbook.git
+        ref: main
+        sparse_paths: [website/contents]
+        include: ["website/contents/front-end-system-design*.md"]
+        url:
+          base: https://www.frontendinterviewhandbook.com/
+          strip_prefix: website/contents/
+          replace: {".md": ""}
+      - name: frontend-system-design-guide
+        kind: git
+        location: https://github.com/devkodeio/frontend-system-design.git
+        ref: main
+        include: [README.md]
+        url:
+          base: https://github.com/devkodeio/frontend-system-design/blob/main/
+      - name: web-dev
+        kind: git
+        location: https://github.com/GoogleChrome/web.dev.git
+        ref: main
+        sparse_paths:
+          - src/site/content/en/learn/pwa
+          - src/site/content/en/learn/accessibility
+          - src/site/content/en/learn/images
+          - src/site/content/en/fast
+          - src/site/content/en/reliable
+          - src/site/content/en/vitals
+          - src/site/content/en/blog/rendering-on-the-web
+          - src/site/content/en/blog/vitals-spa-faq
+        include: ["src/site/content/en/**/index.md"]
+        url:
+          base: https://web.dev/
+          strip_prefix: src/site/content/en/
+          replace: {"index.md": ""}

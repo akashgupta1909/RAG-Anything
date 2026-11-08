@@ -1,6 +1,6 @@
 {
-  "description": "Hand-labelled questions with the documentation pages that answer them. relevant_urls are document-level (any chunk of the page counts). Categories: factual, how-to, identifier (exact API / flag names, where BM25 matters), design (system design reasoning), cross-domain (needs several domains).",
-  "version": 1,
+  "description": "Hand-labelled questions with the documentation pages that answer them. relevant_urls are document-level (any chunk of the page counts). Categories: factual, how-to, identifier (exact API / flag names, where BM25 matters), design (system design reasoning), cross-domain (needs several domains). v3: labels extended with pages from sources added after the questions were written (ByteByteGo, karanpratapsingh, MDN overview pages), chosen by topic, not by which system retrieved them.",
+  "version": 3,
   "examples": [
     {
       "id": "py-01",
@@ -251,7 +251,9 @@
       "id": "sd-01",
       "question": "What are the trade-offs between consistency and availability according to the CAP theorem?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md",
+        "https://bytebytego.com/guides/cap-theorem-one-of-the-most-misunderstood-terms/",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
       ],
       "domains": [
         "system_design"
@@ -263,7 +265,10 @@
       "id": "sd-02",
       "question": "When should I use write-through caching versus write-behind (write-back) caching?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md",
+        "https://bytebytego.com/guides/top-5-caching-strategies/",
+        "https://bytebytego.com/guides/what-are-the-top-caching-strategies/",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
       ],
       "domains": [
         "system_design"
@@ -275,7 +280,8 @@
       "id": "sd-03",
       "question": "How would you design a URL shortener like Bit.ly?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/pastebin/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/pastebin/README.md",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
       ],
       "domains": [
         "system_design"
@@ -287,7 +293,8 @@
       "id": "sd-04",
       "question": "How does fan-out work when delivering tweets to followers' home timelines?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/twitter/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/twitter/README.md",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
       ],
       "domains": [
         "system_design"
@@ -299,7 +306,8 @@
       "id": "sd-05",
       "question": "How should a web crawler avoid crawling duplicate pages?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/web_crawler/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/web_crawler/README.md",
+        "https://bytebytego.com/guides/how-to-avoid-crawling-duplicate-urls-at-google-scale/"
       ],
       "domains": [
         "system_design"
@@ -311,7 +319,8 @@
       "id": "sd-06",
       "question": "What is the difference between master-slave and master-master database replication?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/README.md",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
       ],
       "domains": [
         "system_design"
@@ -323,7 +332,8 @@
       "id": "sd-07",
       "question": "How would you scale a web application from a single server to millions of users on AWS?",
       "relevant_urls": [
-        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/scaling_aws/README.md"
+        "https://github.com/donnemartin/system-design-primer/blob/master/solutions/system_design/scaling_aws/README.md",
+        "https://bytebytego.com/guides/how-to-scale-a-website-to-support-millions-of-users/"
       ],
       "domains": [
         "system_design"
@@ -376,6 +386,275 @@
       ],
       "category": "cross-domain",
       "reference_answer": "Kubernetes sends SIGTERM, waits terminationGracePeriodSeconds (default 30s), then sends SIGKILL; the Pod is removed from Service endpoints. The Python process should handle SIGTERM (signal module, or loop.add_signal_handler in asyncio) to stop accepting work, finish in-flight requests and exit before the grace period ends; a preStop hook can add delay."
+    },
+    {
+      "id": "go-01",
+      "question": "How do goroutines communicate with channels, and how does a buffered channel differ from an unbuffered one?",
+      "relevant_urls": [
+        "https://go.dev/doc/effective_go",
+        "https://go.dev/ref/spec"
+      ],
+      "domains": [
+        "golang"
+      ],
+      "category": "factual",
+      "reference_answer": "Goroutines share memory by communicating over channels. Sends on an unbuffered channel block until a receiver is ready; a buffered channel blocks the sender only when the buffer is full, so it can be used like a semaphore or queue."
+    },
+    {
+      "id": "go-02",
+      "question": "How do I add and upgrade a dependency with Go modules?",
+      "relevant_urls": [
+        "https://go.dev/doc/modules/managing-dependencies"
+      ],
+      "domains": [
+        "golang"
+      ],
+      "category": "how-to",
+      "reference_answer": "Use go get example.com/pkg@version to add or upgrade (or @latest), which updates go.mod and go.sum; go mod tidy removes unused dependencies."
+    },
+    {
+      "id": "go-03",
+      "question": "What does the GOGC setting control in Go's garbage collector?",
+      "relevant_urls": [
+        "https://go.dev/doc/gc-guide"
+      ],
+      "domains": [
+        "golang"
+      ],
+      "category": "identifier",
+      "reference_answer": "GOGC sets the GC target heap growth percentage: with GOGC=100 the heap may grow 100% over the live heap before the next collection. Higher values trade memory for less GC CPU; GOMEMLIMIT sets a soft memory limit."
+    },
+    {
+      "id": "go-04",
+      "question": "How do I write and run a fuzz test in Go?",
+      "relevant_urls": [
+        "https://go.dev/doc/security/fuzz/",
+        "https://go.dev/doc/tutorial/fuzz"
+      ],
+      "domains": [
+        "golang"
+      ],
+      "category": "how-to",
+      "reference_answer": "Write a FuzzXxx(f *testing.F) function in a _test.go file, add seed inputs with f.Add, call f.Fuzz with a function taking *testing.T and the fuzzed arguments, and run go test -fuzz=FuzzXxx."
+    },
+    {
+      "id": "js-01",
+      "question": "What is a closure in JavaScript?",
+      "relevant_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures"
+      ],
+      "domains": [
+        "javascript"
+      ],
+      "category": "factual",
+      "reference_answer": "A closure is a function bundled with references to its surrounding lexical environment, so an inner function keeps access to the outer function's variables even after the outer function has returned."
+    },
+    {
+      "id": "js-02",
+      "question": "What is the difference between Promise.all and Promise.allSettled?",
+      "relevant_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/all",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/allSettled",
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise"
+      ],
+      "domains": [
+        "javascript"
+      ],
+      "category": "identifier",
+      "reference_answer": "Promise.all fulfils with all values when every promise fulfils and rejects as soon as any one rejects. Promise.allSettled waits for all of them and fulfils with an array of {status, value|reason} objects, never rejecting."
+    },
+    {
+      "id": "js-03",
+      "question": "How does the JavaScript event loop process jobs, and when do promise callbacks run?",
+      "relevant_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model"
+      ],
+      "domains": [
+        "javascript"
+      ],
+      "category": "factual",
+      "reference_answer": "The agent runs one job at a time to completion from its job queue; promise reactions are queued as microtasks that run after the current task completes and before the next task, so the event loop drains them first."
+    },
+    {
+      "id": "js-04",
+      "question": "How do I make an HTTP request with fetch and handle errors?",
+      "relevant_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch"
+      ],
+      "domains": [
+        "javascript"
+      ],
+      "category": "how-to",
+      "reference_answer": "Call fetch(url, options), await the Response, check response.ok (fetch only rejects on network errors, not HTTP error statuses), then parse with response.json(); use an AbortController signal to cancel."
+    },
+    {
+      "id": "react-01",
+      "question": "When should I use useMemo versus useCallback?",
+      "relevant_urls": [
+        "https://react.dev/reference/react/useMemo",
+        "https://react.dev/reference/react/useCallback"
+      ],
+      "domains": [
+        "react"
+      ],
+      "category": "identifier",
+      "reference_answer": "useMemo caches the result of a calculation between renders; useCallback caches a function definition. Both are performance optimisations, useful e.g. when passing values or callbacks to memoized children or effect dependencies."
+    },
+    {
+      "id": "react-02",
+      "question": "Why does my Effect run twice in development and how should I handle it?",
+      "relevant_urls": [
+        "https://react.dev/learn/synchronizing-with-effects"
+      ],
+      "domains": [
+        "react"
+      ],
+      "category": "factual",
+      "reference_answer": "In development Strict Mode React mounts, unmounts and remounts components to surface missing cleanup; the fix is to implement a cleanup function so setup -> cleanup -> setup behaves like a single setup."
+    },
+    {
+      "id": "react-03",
+      "question": "How do I share state between two sibling components in React?",
+      "relevant_urls": [
+        "https://react.dev/learn/sharing-state-between-components"
+      ],
+      "domains": [
+        "react"
+      ],
+      "category": "how-to",
+      "reference_answer": "Lift the state up to their closest common parent and pass it down as props, along with event handlers that let the children update it."
+    },
+    {
+      "id": "rn-01",
+      "question": "How do I render a long list efficiently in React Native?",
+      "relevant_urls": [
+        "https://reactnative.dev/docs/flatlist",
+        "https://reactnative.dev/docs/optimizing-flatlist-configuration"
+      ],
+      "domains": [
+        "react_native"
+      ],
+      "category": "how-to",
+      "reference_answer": "Use FlatList (virtualized) instead of mapping in a ScrollView, provide keyExtractor, and tune props like initialNumToRender, maxToRenderPerBatch, windowSize, getItemLayout and memoized renderItem."
+    },
+    {
+      "id": "rn-02",
+      "question": "How do I write platform-specific code for iOS and Android in React Native?",
+      "relevant_urls": [
+        "https://reactnative.dev/docs/platform-specific-code"
+      ],
+      "domains": [
+        "react_native"
+      ],
+      "category": "how-to",
+      "reference_answer": "Use the Platform module (Platform.OS, Platform.select) for small differences, or platform-specific file extensions such as Component.ios.js and Component.android.js which the bundler picks automatically."
+    },
+    {
+      "id": "sd-08",
+      "question": "How does consistent hashing work and why is it used?",
+      "relevant_urls": [
+        "https://bytebytego.com/guides/consistent-hashing/",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Keys and nodes are hashed onto a ring; a key belongs to the next node clockwise, so adding or removing a node only remaps the keys of its neighbour. Virtual nodes even out the distribution. Used for sharding and distributed caches."
+    },
+    {
+      "id": "sd-09",
+      "question": "When should I choose GraphQL instead of REST, and where does gRPC fit?",
+      "relevant_urls": [
+        "https://bytebytego.com/guides/rest-api-vs-graphql/",
+        "https://bytebytego.com/guides/how-does-grpc-work/",
+        "https://bytebytego.com/guides/what-is-grpc/",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": null
+    },
+    {
+      "id": "sd-10",
+      "question": "How does the OAuth 2.0 authorization code flow work?",
+      "relevant_urls": [
+        "https://bytebytego.com/guides/oauth-2-explained-with-siple-terms/",
+        "https://bytebytego.com/guides/oauth-20-flows/",
+        "https://github.com/karanpratapsingh/system-design/blob/main/README.md"
+      ],
+      "domains": [
+        "system_design"
+      ],
+      "category": "design",
+      "reference_answer": null
+    },
+    {
+      "id": "fe-01",
+      "question": "What is the difference between server-side rendering, static rendering and client-side rendering, and what is hydration?",
+      "relevant_urls": [
+        "https://web.dev/blog/rendering-on-the-web/"
+      ],
+      "domains": [
+        "frontend_system_design"
+      ],
+      "category": "design",
+      "reference_answer": "SSR renders HTML on the server per request; static rendering produces HTML at build time; CSR renders in the browser with JavaScript. Hydration attaches client-side JavaScript and state to server-rendered HTML, which can delay interactivity."
+    },
+    {
+      "id": "fe-02",
+      "question": "How would you design an autocomplete (typeahead) component in a front-end system design interview?",
+      "relevant_urls": [
+        "https://www.frontendinterviewhandbook.com/front-end-system-design-ui-components"
+      ],
+      "domains": [
+        "frontend_system_design"
+      ],
+      "category": "design",
+      "reference_answer": null
+    },
+    {
+      "id": "fe-03",
+      "question": "What caching strategies can a service worker use to make a web app work offline?",
+      "relevant_urls": [
+        "https://web.dev/learn/pwa/caching/",
+        "https://web.dev/reliable/"
+      ],
+      "domains": [
+        "frontend_system_design"
+      ],
+      "category": "design",
+      "reference_answer": "Precache the app shell at install time and use runtime strategies such as cache first, network first, stale-while-revalidate, cache only or network only depending on the resource, via the Cache Storage API."
+    },
+    {
+      "id": "fe-04",
+      "question": "How do code splitting and lazy loading improve page load performance?",
+      "relevant_urls": [
+        "https://web.dev/fast/reduce-javascript-payloads-with-code-splitting/",
+        "https://web.dev/fast/lazy-loading/"
+      ],
+      "domains": [
+        "frontend_system_design"
+      ],
+      "category": "design",
+      "reference_answer": null
+    },
+    {
+      "id": "x-04",
+      "question": "How do I implement infinite scrolling in a React app using the IntersectionObserver API?",
+      "relevant_urls": [
+        "https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API",
+        "https://react.dev/reference/react/useEffect",
+        "https://react.dev/reference/react/useRef"
+      ],
+      "domains": [
+        "javascript",
+        "react"
+      ],
+      "category": "cross-domain",
+      "reference_answer": null
     }
   ]
 }
