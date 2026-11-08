@@ -1,0 +1,190 @@
+# ---------------------------------------------------------------------------
+# rag-search-engine configuration.
+#
+# Non-secret settings live here; secrets (API keys) live in `.env`.
+# Any value can be overridden with an environment variable prefixed `RAG_`,
+# using `__` for nesting, e.g. `RAG_RETRIEVAL__TOP_K=8`.
+# Relative paths are resolved against the directory of this file.
+# ---------------------------------------------------------------------------
+
+app:
+  name: rag-search-engine
+  log_level: INFO
+  log_dir: logs
+
+paths:
+  raw_data_dir: data/raw      # downloaded source documents
+  model_cache_dir: data/models  # ONNX embedding / reranker models
+  eval_dir: eval
+
+vectordb:
+  # Embedded (in-process) Qdrant when `url` is empty; set QDRANT_URL (see .env)
+  # to use a Qdrant server, e.g. the one started by docker-compose.
+  url: ""
+  path: data/qdrant
+  text_collection: docs
+  image_collection: diagrams
+  upsert_batch_size: 128
+
+embeddings:
+  dense_model: BAAI/bge-small-en-v1.5        # 384-d, strong on technical text
+  sparse_model: Qdrant/bm25                  # BM25 term weights; IDF applied by Qdrant
+  image_model: Qdrant/clip-ViT-B-32-vision   # CLIP image tower (512-d)
+  image_text_model: Qdrant/clip-ViT-B-32-text  # CLIP text tower, same space
+  batch_size: 64
+
+chunking:
+  max_chars: 1500   # ~350 tokens, well under the 512-token limit of the dense model
+  min_chars: 300    # smaller sections are merged with their neighbours
+
+retrieval:
+  mode: hybrid            # hybrid | dense | sparse
+  prefetch_limit: 50      # candidates fetched from each of dense and sparse search
+  candidates: 30          # fused candidates passed to the reranker
+  top_k: 6                # chunks kept per query after reranking
+  # Off by default: on the golden set, cross-encoder reranking did not improve
+  # MRR/nDCG over hybrid search and added ~1-4 s per query on CPU (see the
+  # README's evaluation section). Enable per request with rerank=true.
+  rerank:
+    enabled: false
+    model: Xenova/ms-marco-MiniLM-L-6-v2
+
+agent:
+  # A bounded, deterministic "agentic" loop: plan -> retrieve -> grade -> (retry) -> answer.
+  planning: true              # route to domains and decompose multi-part questions
+  max_sub_queries: 3
+  self_correction: true       # grade the context and run a follow-up search if insufficient
+  max_retrieval_rounds: 2
+
+generation:
+  max_context_chunks: 10
+  max_tokens: 1500
+  max_diagrams: 3
+
+llm:
+  temperature: 0.0
+  timeout_seconds: 60
+  max_retries: 2      # per provider (rate limits and transient errors back off)
+  # Tried in order; a provider is skipped when its key is missing or it fails.
+  # All are free-tier, OpenAI-compatible APIs.
+  providers:
+    - name: groq-qwen
+      base_url: https://api.groq.com/openai/v1
+      api_key_env: GROQ_API_KEY
+      model: qwen/qwen3.8-27b
+    - name: groq-gpt-oss
+      base_url: https://api.groq.com/openai/v1
+      api_key_env: GROQ_API_KEY
+      model: openai/gpt-oss-120b
+      extra_body: {reasoning_effort: low, include_reasoning: false}
+    - name: openrouter
+      base_url: https://openrouter.ai/api/v1
+      api_key_env: OPENROUTER_API_KEY
+      model: openrouter/free
+  # Planner and grader: a small model with its own rate-limit budget, falling
+  # back to the answer model. Free-tier token-per-minute limits are the main
+  # throughput constraint, so steps are spread across models.
+  fast_providers:
+    - name: groq-gpt-oss-20b
+      base_url: https://api.groq.com/openai/v1
+      api_key_env: GROQ_API_KEY
+      model: openai/gpt-oss-20b
+      extra_body: {reasoning_effort: low, include_reasoning: false}
+    - name: groq-qwen
+      base_url: https://api.groq.com/openai/v1
+      api_key_env: GROQ_API_KEY
+      model: qwen/qwen3.8-27b
+  # The evaluation judge uses a different model family from the generator
+  # to avoid self-preference bias.
+  judge:
+    name: groq-judge
+    base_url: https://api.groq.com/openai/v1
+    api_key_env: GROQ_API_KEY
+    model: openai/gpt-oss-120b
+    extra_body: {reasoning_effort: low, include_reasoning: false}
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  cors_origins: []
+
+# ---------------------------------------------------------------------------
+# Knowledge domains. Adding a domain is configuration only: give it a
+# description (the planner routes queries with it) and one or more sources.
+#
+# Source fields:
+#   kind:            git | http_archive | local
+#   location:        repository URL, archive URL or local folder
+#   ref:             git branch; sparse_paths: only check out these folders
+#   format:          markdown | html | auto (by file extension; the default)
+#   include/exclude: glob patterns relative to the source root
+#   url:             how a file maps to its public URL: base + path, after
+#                    `strip_prefix` and the first matching `replace` suffix;
+#                    `front_matter_key` uses a front-matter field instead
+#   images:          index referenced diagrams with CLIP
+#   download_images: fetch remote diagrams (cached under the source folder)
+#   asset_base:      public base URL for diagrams stored in the repository
+# ---------------------------------------------------------------------------
+domains:
+  - name: python
+    description: >-
+      The Python language and standard library: syntax, data model, typing,
+      asyncio, threading, multiprocessing, the GIL, collections, functools,
+      itertools, logging, testing, packaging and the official tutorial/HOWTOs.
+    sources:
+      - name: python-docs
+        kind: http_archive
+        location: https://docs.python.org/3/archives/python-3.15-docs-html.zip
+        format: html
+        include:
+          - "*/tutorial/*.html"
+          - "*/howto/*.html"
+          - "*/reference/*.html"
+          - "*/library/*.html"
+          - "*/faq/*.html"
+          - "*/glossary.html"
+        exclude:
+          - "*/index.html"
+        url:
+          base: https://docs.python.org/3/
+          strip_prefix: "python-3.15-docs-html/"
+
+  - name: kubernetes
+    description: >-
+      Kubernetes concepts and operational tasks: Pods, Deployments, StatefulSets,
+      Services, Ingress, networking, storage, ConfigMaps/Secrets, scheduling,
+      autoscaling, RBAC and security, cluster administration, kubectl usage.
+    sources:
+      - name: kubernetes-website
+        kind: git
+        location: https://github.com/kubernetes/website.git
+        ref: main
+        sparse_paths: [content/en/docs/concepts, content/en/docs/tasks]
+        format: markdown
+        include:
+          - "content/en/docs/concepts/**/*.md"
+          - "content/en/docs/tasks/**/*.md"
+        url:
+          base: https://kubernetes.io/docs/
+          strip_prefix: content/en/docs/
+          replace: {"_index.md": "", ".md": "/"}
+
+  - name: system_design
+    description: >-
+      Distributed system design: scalability, load balancing, caching, CDNs,
+      databases (replication, sharding, SQL vs NoSQL), consistency and
+      availability (CAP), message queues, microservices, rate limiting, and
+      worked designs such as a URL shortener (Pastebin), Twitter timeline,
+      web crawler, social graph and scaling on AWS.
+    sources:
+      - name: system-design-primer
+        kind: git
+        location: https://github.com/donnemartin/system-design-primer.git
+        ref: master
+        images: true
+        include:
+          - README.md
+          - "solutions/system_design/*/README.md"
+        url:
+          base: https://github.com/donnemartin/system-design-primer/blob/master/
+        asset_base: https://raw.githubusercontent.com/donnemartin/system-design-primer/master/
