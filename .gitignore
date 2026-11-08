@@ -1,21 +1,44 @@
-# Python-generated files
+# ---- Python -----------------------------------------------------------------
 __pycache__/
-*.py[oc]
+*.py[cod]
+*.egg-info/
 build/
 dist/
 wheels/
-*.egg-info
 
 # Virtual environments
-.venv
+.venv/
+venv/
 
-# OS files
-.DS_Store
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+htmlcov/
 
-# Generated search index
-cache/
-
-# Large dataset (download separately)
-data/movies.json
-
+# ---- Secrets ----------------------------------------------------------------
+# Real keys live in .env; the template (.env.example) is committed.
 .env
+.env.*
+!.env.example
+
+# ---- Data (all reproducible with `python main.py ingest`) -------------------
+# data/raw     downloaded source docs (git clones, Python docs archive)
+# data/models  ONNX model cache (embeddings, reranker, CLIP)
+# data/qdrant  embedded vector index
+data/
+*.zip.part
+
+# ---- Runtime output ---------------------------------------------------------
+logs/*
+!logs/.gitkeep
+*.log
+eval/reports/
+
+# ---- OS / editors -----------------------------------------------------------
+.DS_Store
+.idea/
+.vscode/
+*.swp
